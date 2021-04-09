@@ -8,6 +8,7 @@ import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.boot.test.web.client.exchange
 import org.springframework.boot.test.web.client.getForEntity
 import org.springframework.boot.test.web.client.postForEntity
 import org.springframework.core.ParameterizedTypeReference
@@ -67,7 +68,7 @@ class TourOfHeroesApplicationTests(
 
 	@Test
 	fun `should be possible to delete a hero`() {
-		val newHero = Hero(0, "bla")
+		val newHero = Hero(0, "bla2")
 		val heroesResult = restTemplate.postForEntity<Hero>("/app/heroes", HttpEntity(newHero))
 		assertThat(heroesResult.statusCode).isEqualTo(HttpStatus.CREATED)
 		val newHeroResult = heroesResult.body!!
@@ -76,6 +77,30 @@ class TourOfHeroesApplicationTests(
 
 		val readResult = restTemplate.getForEntity<Hero>("/app/heroes/${newHeroResult.id}")
 		assertThat(readResult.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+	}
+
+	@Test
+	fun `should be possible to modify a hero`() {
+		val newHero = Hero(0, "bla3")
+		val heroesResult = restTemplate.postForEntity<Hero>("/app/heroes", HttpEntity(newHero))
+		assertThat(heroesResult.statusCode).isEqualTo(HttpStatus.CREATED)
+		val newHeroResult = heroesResult.body!!
+
+		val modifiedHero = newHeroResult.copy(name = "bla4")
+		restTemplate.put("/app/heroes/${newHeroResult.id}", HttpEntity(modifiedHero))
+
+		val readResult = restTemplate.getForEntity<Hero>("/app/heroes/${newHeroResult.id}")
+		assertThat(readResult.statusCode).isEqualTo(HttpStatus.OK)
+		assertThat(readResult.body).isEqualTo(modifiedHero)
+	}
+
+	@Test
+	fun `should give badrequest if put input is not coherent`() {
+		val heroToModify = initialHeroes[0]
+		val modifiedHero = Hero(999999, "bla4")
+		val putResult = restTemplate.exchange<Hero>("/app/heroes/${heroToModify.id}", HttpMethod.PUT, HttpEntity(modifiedHero))
+
+		assertThat(putResult.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
 	}
 
 }

@@ -60,4 +60,17 @@ class HeroesController{
 		heroesRepo.remove(id)
 			?.let { ResponseEntity.ok(Unit) }
 			?: ResponseEntity.notFound().build()
+
+	@PutMapping(value = ["/heroes/{id}"])
+	fun deleteHero(@PathVariable("id") id: Int, @RequestBody hero: Hero): ResponseEntity<Unit> =
+		heroesRepo[id]
+			?.let {
+				if(hero.id == id){
+					heroesRepo[hero.id] = hero
+					ResponseEntity.ok(Unit)
+				} else{
+					ResponseEntity.badRequest().build()
+				}
+			}
+			?: ResponseEntity.notFound().build()
 }
